@@ -1,2 +1,3 @@
 pub mod entities;
-mod vo;
+pub mod errors;
+pub mod vo;
