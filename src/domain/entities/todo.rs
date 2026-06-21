@@ -2,20 +2,20 @@ use std::{fmt::Display, str::FromStr};
 
 use chrono::{DateTime, Utc};
 
-use crate::domain::vo::todo_status::TodoStatus;
+use crate::domain::{errors::todo::TodoError, vo::todo_status::TodoStatus};
 
 #[derive(Debug)]
-struct Todo {
-    id: u64,
-    title: String,
-    description: String,
-    priority: Priority,
-    status: TodoStatus,
-    tags: Vec<String>,
-    due_at: DateTime<Utc>,
-    completed_at: Option<DateTime<Utc>>,
-    updated_at: DateTime<Utc>,
-    created_at: DateTime<Utc>,
+pub struct Todo {
+    pub id: u64,
+    pub title: String,
+    pub description: Option<String>,
+    pub priority: Priority,
+    pub status: TodoStatus,
+    pub tags: Vec<String>,
+    pub due_at: Option<DateTime<Utc>>,
+    pub completed_at: Option<DateTime<Utc>>,
+    pub updated_at: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug)]
@@ -56,12 +56,17 @@ impl Todo {
         description: &str,
         priority: Priority,
         tags: Vec<String>,
-        due_at: DateTime<Utc>,
+        due_at: Option<DateTime<Utc>>,
     ) -> Todo {
+        let description = if description.is_empty() {
+            None
+        } else {
+            Some(description.trim().to_string())
+        };
         Self {
             id: 1,
             title: title.trim().to_string(),
-            description: description.trim().to_string(),
+            description,
             priority,
             status: TodoStatus::InProgress,
             tags,
