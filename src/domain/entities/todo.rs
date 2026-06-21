@@ -1,3 +1,5 @@
+use std::{fmt::Display, str::FromStr};
+
 use chrono::{DateTime, Utc};
 
 use crate::domain::vo::todo_status::TodoStatus;
@@ -22,6 +24,30 @@ pub enum Priority {
     Medium,
     High,
     Critical,
+}
+
+impl FromStr for Priority {
+    type Err = TodoError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().trim() {
+            "critical" => Ok(Priority::Critical),
+            "high" => Ok(Priority::High),
+            "medium" => Ok(Priority::Medium),
+            "low" => Ok(Priority::Low),
+            _ => Err(TodoError::InvalidPriority(s.to_string())),
+        }
+    }
+}
+impl Display for Priority {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let priority_string = match self {
+            Priority::Critical => "critical",
+            Priority::High => "high",
+            Priority::Medium => "medium",
+            Priority::Low => "low",
+        };
+        write!(f, "{}", priority_string)
+    }
 }
 
 impl Todo {
