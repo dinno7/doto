@@ -11,7 +11,7 @@ pub enum TodoStatus {
 }
 
 impl TodoStatus {
-    fn is_done(&self) -> bool {
+    pub fn is_done(&self) -> bool {
         *self == TodoStatus::Done
     }
 }
