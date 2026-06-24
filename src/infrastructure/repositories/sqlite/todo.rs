@@ -137,6 +137,41 @@ impl TodoRepository for TodoRepositorySqlite {
 
         Ok(todos)
     }
+
+    async fn delete_by_id(&self, todo_id: u64) -> Result<bool, ApplicationError> {
+        let result = sqlx::query!("DELETE FROM todos WHERE id = ?", todo_id as i64)
+            .execute(&self.db)
+            .await;
+
+        match result {
+            Ok(r) => {
+                if r.rows_affected() == 1 {
+                    return Ok(true);
+                }
+                Ok(false)
+            }
+            Err(e) => Err(ApplicationError::Internal(e.into())),
+        }
+    }
+
+    async fn delete_all(&self) -> Result<u64, ApplicationError> {
+        let result = sqlx::query!("DELETE FROM todos")
+            .execute(&self.db)
+            .await
+            .map_err(|e| ApplicationError::Internal(e.into()))?;
+        Ok(result.rows_affected())
+    }
+
+    async fn delete_all_by_status(&self, todo_status: TodoStatus) -> Result<u64, ApplicationError> {
+        let result = sqlx::query!(
+            "DELETE FROM todos WHERE status = ?",
+            todo_status.to_string()
+        )
+        .execute(&self.db)
+        .await
+        .map_err(|e| ApplicationError::Internal(e.into()))?;
+        Ok(result.rows_affected())
+    }
 }
 
 #[derive(Debug, FromRow)]
