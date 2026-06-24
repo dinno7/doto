@@ -6,7 +6,7 @@ pub enum ApplicationError {
     #[error(transparent)]
     Domain(#[from] DomainError),
 
-    #[error("Not found: {0}")]
+    #[error("No any {0} found!")]
     NotFound(String),
 
     #[error("{0}")]
