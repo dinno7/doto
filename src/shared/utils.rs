@@ -1,3 +1,5 @@
+use std::io::{Write, stdout};
+
 use chrono::{DateTime, Utc};
 use console::style;
 
@@ -37,4 +39,19 @@ pub fn time_ago(dt: DateTime<Utc>) -> String {
         date_str = format!("in {date_str}");
     }
     date_str
+}
+
+pub fn is_user_confirmed(prefix_message: &str) -> bool {
+    if !prefix_message.is_empty() {
+        println!("{}", style(prefix_message).bold().red());
+    }
+    print!("{}", style("Are you sure?(Y/n) ").yellow());
+    stdout().flush().unwrap();
+
+    let mut user_input = String::new();
+    std::io::stdin().read_line(&mut user_input).unwrap();
+
+    let confirmed = user_input.trim().get(0..1).unwrap_or("n").to_lowercase();
+
+    confirmed == "y"
 }
