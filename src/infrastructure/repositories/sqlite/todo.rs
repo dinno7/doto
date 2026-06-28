@@ -102,40 +102,38 @@ impl TodoRepository for TodoRepositorySqlite {
         Ok(todos)
     }
 
-    async fn get_all_with_tags(&self) -> Result<Vec<Todo>, ApplicationError> {
-        let todos = self.get_all().await?;
+    async fn get_tags_with_todo_ids(
+        &self,
+        todo_ids: Vec<u64>,
+    ) -> Result<HashMap<u64, Vec<String>>, ApplicationError> {
+        let mut qb = sqlx::QueryBuilder::new(
+            "SELECT todo_id, name FROM todo_tags JOIN tags ON tags.id = tag_id WHERE todo_id IN (",
+        );
+        let mut sep = qb.separated(", ");
 
-        let tags = sqlx::query_as::<_, (i64, String)>(
-            r#"
-            SELECT tt.todo_id, tg.name
-            FROM tags tg
-            JOIN todo_tags tt ON tt.tag_id = tg.id
-            WHERE tt.todo_id IN (SELECT id FROM todos ORDER BY id)
-            ORDER BY tt.todo_id
-            "#,
-        )
-        .fetch_all(&self.db)
-        .await
-        .map_err(|e| ApplicationError::Internal(e.into()))?;
+        for todo_id in todo_ids {
+            sep.push_bind(todo_id as i64);
+        }
+        sep.push_unseparated("");
 
-        let mut tags_map: HashMap<i64, Vec<String>> = HashMap::new();
-        for (todo_id, tag_name) in tags {
-            tags_map
-                .entry(todo_id)
-                .and_modify(|t| t.push(tag_name.clone()))
+        qb.push(")");
+
+        let records: Vec<(i64, String)> = qb
+            .build_query_as()
+            .fetch_all(&self.db)
+            .await
+            .map_err(|e| ApplicationError::Internal(e.into()))?;
+
+        let mut result: HashMap<u64, Vec<String>> = HashMap::new();
+        for (todo_id, tag_name) in records {
+            result
+                .entry(todo_id as u64)
+                .and_modify(|tags| {
+                    tags.push(tag_name.clone());
+                })
                 .or_insert(vec![tag_name]);
         }
-
-        let todos: Vec<Todo> = todos
-            .into_iter()
-            .map(|t| {
-                let mut todo = t;
-                todo.tags = tags_map.remove(&(todo.id as i64)).unwrap_or_default();
-                todo
-            })
-            .collect();
-
-        Ok(todos)
+        Ok(result)
     }
 
     async fn delete_by_id(&self, todo_id: u64) -> Result<bool, ApplicationError> {
